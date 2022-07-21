@@ -180,7 +180,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
             self.isFromPushKit = false
             self.sendEvent(SwiftFlutterCallkitIncomingPlugin.ACTION_CALL_ENDED, data.toJSON())
         }else {
-            call = Call(uuid: UUID(uuidString: data.uuid)!, data: data)
+            call = Call(uuid: UUID(uuidString: UUID().uuidString)!, data: data)
         }
         self.callManager?.endCall(call: call!)
     }
@@ -219,7 +219,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     
     func endCallNotExist(_ data: Data) {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(data.duration)) {
-            let call = self.callManager?.callWithUUID(uuid: UUID(uuidString: data.uuid)!)
+            let call = self.callManager?.callWithUUID(uuid: UUID(uuidString: UUID().uuidString)!)
             if (call != nil && self.answerCall == nil && self.outgoingCall == nil) {
                 self.callEndTimeout(data)
             }
