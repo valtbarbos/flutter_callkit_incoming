@@ -149,7 +149,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
         
         initCallkitProvider(data)
         
-        let uuid = UUID(uuidString: data.uuid)
+        let uuid = UUID(uuidString: UUID().uuidString)
         
         configurAudioSession()
         self.sharedProvider?.reportNewIncomingCall(with: uuid!, update: callUpdate) { error in
