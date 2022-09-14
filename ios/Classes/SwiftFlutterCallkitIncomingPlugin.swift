@@ -149,7 +149,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
         
         initCallkitProvider(data)
         
-        let uuid = UUID(uuidString: data.uuid)
+        let uuid = UUID(uuidString: UUID().uuidString)
         
         configurAudioSession()
         self.sharedProvider?.reportNewIncomingCall(with: uuid!, update: callUpdate) { error in
@@ -174,13 +174,10 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     }
     
     @objc public func endCall(_ data: Data) {
-        var call: Call? = nil
+        let call: Call? = Call(uuid: UUID(uuidString: UUID().uuidString)!, data: data)
         if(self.isFromPushKit){
-            call = Call(uuid: UUID(uuidString: self.data!.uuid)!, data: data)
             self.isFromPushKit = false
             self.sendEvent(SwiftFlutterCallkitIncomingPlugin.ACTION_CALL_ENDED, data.toJSON())
-        }else {
-            call = Call(uuid: UUID(uuidString: data.uuid)!, data: data)
         }
         self.callManager?.endCall(call: call!)
     }
@@ -219,7 +216,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     
     func endCallNotExist(_ data: Data) {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(data.duration)) {
-            let call = self.callManager?.callWithUUID(uuid: UUID(uuidString: data.uuid)!)
+            let call = self.callManager?.callWithUUID(uuid: UUID(uuidString: UUID().uuidString)!)
             if (call != nil && self.answerCall == nil && self.outgoingCall == nil) {
                 self.callEndTimeout(data)
             }
