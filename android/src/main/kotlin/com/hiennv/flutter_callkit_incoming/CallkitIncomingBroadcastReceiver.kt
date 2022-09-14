@@ -107,9 +107,13 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     callkitNotificationManager.showIncomingNotification(data)
                     sendEventFlutter(ACTION_CALL_INCOMING, data)
                     addCall(context, Data.fromBundle(data))
-                    val soundPlayerServiceIntent = Intent(context, CallkitSoundPlayerService::class.java)
-                    soundPlayerServiceIntent.putExtras(data)
-                    context.startService(soundPlayerServiceIntent)
+
+                    if (callkitNotificationManager.incomingChannelEnabled()) {
+                        val soundPlayerServiceIntent =
+                            Intent(context, CallkitSoundPlayerService::class.java)
+                        soundPlayerServiceIntent.putExtras(data)
+                        context.startService(soundPlayerServiceIntent)
+                    }
                 } catch (error: Exception) {
                     error.printStackTrace()
                 }
@@ -137,7 +141,8 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     sendEventFlutter(ACTION_CALL_DECLINE, data)
                     context.stopService(Intent(context, CallkitSoundPlayerService::class.java))
                     callkitNotificationManager.clearIncomingNotification(data)
-                    removeCall(context, Data.fromBundle(data))
+                    // We want to check through [activeCalls] when the app RESUME
+                    // removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
                     error.printStackTrace()
                 }
@@ -147,7 +152,8 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     sendEventFlutter(ACTION_CALL_ENDED, data)
                     context.stopService(Intent(context, CallkitSoundPlayerService::class.java))
                     callkitNotificationManager.clearIncomingNotification(data)
-                    removeCall(context, Data.fromBundle(data))
+                    // We want to check through [activeCalls] when the app RESUME
+                    // removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
                     error.printStackTrace()
                 }
@@ -159,7 +165,8 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     if (data.getBoolean(EXTRA_CALLKIT_IS_SHOW_MISSED_CALL_NOTIFICATION, true)) {
                         callkitNotificationManager.showMissCallNotification(data)
                     }
-                    removeCall(context, Data.fromBundle(data))
+                    // We want to check through [activeCalls] when the app RESUME
+                    // removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
                     error.printStackTrace()
                 }
