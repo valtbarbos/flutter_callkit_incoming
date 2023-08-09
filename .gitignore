@@ -7,3 +7,7 @@
 build/
 
 pubspec.lock
+
+android/src/main/res/drawable-xxxhdpi/ic_default_avatar.png
+
+android/src/main/res/drawable-xxxhdpi/ic_logo.png
