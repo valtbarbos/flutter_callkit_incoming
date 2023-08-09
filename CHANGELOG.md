@@ -1,3 +1,53 @@
+## 2.0.0+1
+
+* Fixed some bugs.
+* Add `landscape` for tablet
+* Fix issue head-up for redmi / xiaomi devices
+
+## 2.0.0
+
+* Fixed some bugs.
+* Adapt flutter_lints and use lowerCamelCase to Event enum
+* Rename properties 
+        `textMisssedCall` -> `subtitle`,
+        `textCallback` -> `callbackText`,
+        `isShowMissedCallNotification` -> `showNotification`,
+* Move inside properties `missedCallNotification {showNotification, isShowCallback, subtitle, callbackText}`
+* Add setCallConnected option iOS `await FlutterCallkitIncoming.setCallConnected(this._currentUuid)`
+* Add hold option iOS
+* Add mute call option iOS
+* Many other issues
+    1. Thank @ryojiro
+    https://github.com/hiennguyen92/flutter_callkit_incoming/pull/263
+    https://github.com/hiennguyen92/flutter_callkit_incoming/pull/264
+    https://github.com/hiennguyen92/flutter_callkit_incoming/pull/262
+    2. Many Thank @mouEsam
+    https://github.com/hiennguyen92/flutter_callkit_incoming/pull/227
+    3. ...
+
+
+## 1.0.3+3
+
+* Update README.md
+* Fixed some bugs.
+
+## 1.0.3+2
+
+* REMOVED
+
+## 1.0.3+1
+
+* Dart class models instead using dynamic types and Maps (thank @icodelifee - https://github.com/hiennguyen92/flutter_callkit_incoming/pull/180)
+* Allow to call from native Android (thank @fabiocody - https://github.com/hiennguyen92/flutter_callkit_incoming/pull/185)
+* Add android notification channel name `incomingCallNotificationChannelName` `missedCallNotificationChannelName` (thank @AAkira - https://github.com/hiennguyen92/flutter_callkit_incoming/pull/177)
+* Adding the feature to change template of notification to small `isCustomSmallExNotification` (thank @anocean2 - https://github.com/hiennguyen92/flutter_callkit_incoming/pull/196)
+* Fixed ringtone sound not playing in Release mode on Android (thank @mschudt - https://github.com/hiennguyen92/flutter_callkit_incoming/pull/204)
+* Fixed some bugs.
+
+## 1.0.3
+
+* REMOVED
+
 ## 1.0.2+2
 
 * Fix notification Android 12
