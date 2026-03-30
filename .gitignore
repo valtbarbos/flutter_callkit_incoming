@@ -11,3 +11,4 @@ pubspec.lock
 example/ios/Podfile.lock
 example/pubspec.lock
 android/src/main/res/drawable-xxxhdpi/*
+.idea/*
