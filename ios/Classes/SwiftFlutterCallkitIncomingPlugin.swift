@@ -41,6 +41,10 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     private var silenceEvents: Bool = false
     private let devicePushTokenVoIP = "DevicePushTokenVoIP"
 
+    private func logDebug(_ message: String) {
+        NSLog("[flutter_callkit_incoming][iOS] %@", message)
+    }
+
     
     private func sendEvent(_ event: String, _ body: [String : Any?]?) {
         if silenceEvents {
@@ -256,43 +260,8 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     }
     
     @objc public func showCallkitIncoming(_ data: Data, fromPushKit: Bool) {
-        self.isFromPushKit = fromPushKit
-        if(fromPushKit){
-            self.data = data
-        }
-        
-        if(data.isShowMissedCallNotification){
-            CallkitNotificationManager.shared.addNotificationCategory(data.missedNotificationCallbackText)
-        }
-        
-        var handle: CXHandle?
-        handle = CXHandle(type: self.getHandleType(data.handleType), value: data.getEncryptHandle())
-        
-        let callUpdate = CXCallUpdate()
-
-        callUpdate.remoteHandle = handle
-        callUpdate.supportsDTMF = data.supportsDTMF
-        callUpdate.supportsHolding = data.supportsHolding
-        callUpdate.supportsGrouping = data.supportsGrouping
-        callUpdate.supportsUngrouping = data.supportsUngrouping
-        callUpdate.hasVideo = data.type > 0 ? true : false
-        callUpdate.localizedCallerName = data.nameCaller
-        
-        initCallkitProvider(data)
-        
-        let uuid = UUID(uuidString: data.uuid)
-        
-        self.configureAudioSession()
-        self.sharedProvider?.reportNewIncomingCall(with: uuid!, update: callUpdate) { error in
-            if(error == nil) {
-                self.configureAudioSession()
-                let call = Call(uuid: uuid!, data: data)
-                call.handle = data.handle
-                self.callManager.addCall(call)
-                self.sendEvent(SwiftFlutterCallkitIncomingPlugin.ACTION_CALL_INCOMING, data.toJSON())
-                self.endCallNotExist(data)
-            }
-        }
+        self.logDebug("showCallkitIncoming without completion uuid=\(data.uuid) fromPushKit=\(fromPushKit)")
+        self.showCallkitIncoming(data, fromPushKit: fromPushKit, completion: {})
     }
     
     @objc public func showCallkitIncoming(_ data: Data, fromPushKit: Bool, completion: @escaping () -> Void) {
@@ -300,6 +269,11 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
         if(fromPushKit){
             self.data = data
         }
+
+        let providerWasInitialized = self.sharedProvider != nil
+        let uuid = UUID(uuidString: data.uuid)
+        let existingCall = uuid.flatMap { self.callManager.callWithUUID(uuid: $0) }
+        self.logDebug("showCallkitIncoming uuid=\(data.uuid) fromPushKit=\(fromPushKit) providerWasInitialized=\(providerWasInitialized) activeCalls=\(self.callManager.calls.count) duplicateUUID=\(existingCall != nil)")
         
         if(data.isShowMissedCallNotification){
             CallkitNotificationManager.shared.addNotificationCategory(data.missedNotificationCallbackText)
@@ -318,18 +292,27 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
         callUpdate.localizedCallerName = data.nameCaller
         
         initCallkitProvider(data)
+
+        guard let uuid else {
+            self.logDebug("showCallkitIncoming invalid uuid=\(data.uuid)")
+            completion()
+            return
+        }
         
-        let uuid = UUID(uuidString: data.uuid)
-        
-        self.sharedProvider?.reportNewIncomingCall(with: uuid!, update: callUpdate) { error in
-            if(error == nil) {
+        self.logDebug("reportNewIncomingCall start uuid=\(uuid.uuidString) localizedCallerName=\(data.nameCaller)")
+        self.sharedProvider?.reportNewIncomingCall(with: uuid, update: callUpdate) { error in
+            if let error {
+                self.logDebug("reportNewIncomingCall failed uuid=\(uuid.uuidString) error=\(error.localizedDescription)")
+            } else {
+                self.logDebug("reportNewIncomingCall succeeded uuid=\(uuid.uuidString)")
                 self.configureAudioSession()
-                let call = Call(uuid: uuid!, data: data)
+                let call = Call(uuid: uuid, data: data)
                 call.handle = data.handle
                 self.callManager.addCall(call)
                 self.sendEvent(SwiftFlutterCallkitIncomingPlugin.ACTION_CALL_INCOMING, data.toJSON())
                 self.endCallNotExist(data)
             }
+            self.logDebug("showCallkitIncoming completion uuid=\(uuid.uuidString)")
             completion()
         }
     }
@@ -462,8 +445,11 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     
     func initCallkitProvider(_ data: Data) {
         if(self.sharedProvider == nil){
+            self.logDebug("initCallkitProvider creating provider localizedName=\(data.appName)")
             self.sharedProvider = CXProvider(configuration: createConfiguration(data))
             self.sharedProvider?.setDelegate(self, queue: nil)
+        } else {
+            self.logDebug("initCallkitProvider reusing provider localizedName=\(data.appName) activeCalls=\(self.callManager.calls.count)")
         }
         self.callManager.setSharedProvider(self.sharedProvider!)
     }
@@ -561,10 +547,16 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     }
     
     public func providerDidReset(_ provider: CXProvider) {
+        self.logDebug("providerDidReset activeCallsBeforeReset=\(self.callManager.calls.count)")
         for call in self.callManager.calls {
             call.endCall()
         }
         self.callManager.removeAllCalls()
+        self.answerCall = nil
+        self.outgoingCall = nil
+        self.data = nil
+        self.sharedProvider = nil
+        self.logDebug("providerDidReset cleanup completed")
     }
     
     public func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
