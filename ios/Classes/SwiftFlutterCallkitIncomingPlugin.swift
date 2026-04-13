@@ -42,7 +42,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
     private let devicePushTokenVoIP = "DevicePushTokenVoIP"
 
     private func logDebug(_ message: String) {
-        NSLog("[flutter_callkit_incoming][iOS] %@", message)
+        print("[flutter_callkit_incoming][iOS] \(message)")
     }
 
     
@@ -274,6 +274,12 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
         let uuid = UUID(uuidString: data.uuid)
         let existingCall = uuid.flatMap { self.callManager.callWithUUID(uuid: $0) }
         self.logDebug("showCallkitIncoming uuid=\(data.uuid) fromPushKit=\(fromPushKit) providerWasInitialized=\(providerWasInitialized) activeCalls=\(self.callManager.calls.count) duplicateUUID=\(existingCall != nil)")
+
+        if existingCall != nil {
+            self.logDebug("showCallkitIncoming ignoring duplicate uuid=\(data.uuid) because callManager already tracks it")
+            completion()
+            return
+        }
         
         if(data.isShowMissedCallNotification){
             CallkitNotificationManager.shared.addNotificationCategory(data.missedNotificationCallbackText)
@@ -475,7 +481,7 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
                 print("Unable to load icon \(data.iconName).");
             }
         }
-        if !data.ringtonePath.isEmpty || data.ringtonePath != "system_ringtone_default"  {
+        if !data.ringtonePath.isEmpty && data.ringtonePath != "system_ringtone_default"  {
             configuration.ringtoneSound = data.ringtonePath
         }
         return configuration
